@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.authorUid;
+    }
+    function uidUnchanged() {
+      return !('authorUid' in request.resource.data) ||
+        request.resource.data.authorUid == request.auth.uid;
+    }
+    function uidNotModified() {
+      return !('authorUid' in request.resource.data) ||
+        request.resource.data.authorUid == resource.data.authorUid;
+    }
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidFRVIRecord() {
+      let data = request.resource.data;
+      return hasRequiredFields(['htmlContent', 'authorUid']) &&
+             data.htmlContent is string && data.htmlContent.size() > 0 && data.htmlContent.size() < 1000000 &&
+             data.authorUid is string &&
+             (!('authorEmail' in data) || (data.authorEmail is string && data.authorEmail.size() < 100)) &&
+             (!('data' in data) || (data.data is string && data.data.size() < 50)) &&
+             (!('simulador' in data) || (data.simulador is string && data.simulador.size() < 50)) &&
+             (!('missao' in data) || (data.missao is string && data.missao.size() < 50)) &&
+             (!('instrutor' in data) || (data.instrutor is string && data.instrutor.size() < 100)) &&
+             (!('instruendo' in data) || (data.instruendo is string && data.instruendo.size() < 100));
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /frvi_records/{recordId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidFRVIRecord() && uidUnchanged();
+      allow update: if isDocOwner() && isValidFRVIRecord() && uidNotModified();
+      allow delete: if isDocOwner();
+    }
+  }
+}

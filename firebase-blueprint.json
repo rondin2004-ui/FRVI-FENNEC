@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "User's email address"
+        }
+      }
+    },
+    "FRVIRecord": {
+      "title": "FRVIRecord",
+      "description": "A saved FRVI form record",
+      "type": "object",
+      "properties": {
+        "data": { "type": "string" },
+        "simulador": { "type": "string" },
+        "missao": { "type": "string" },
+        "instrutor": { "type": "string" },
+        "instruendo": { "type": "string" },
+        "htmlContent": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "authorEmail": { "type": "string" },
+        "createdAt": { "type": "timestamp" }
+      },
+      "required": ["htmlContent", "authorUid"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "frvi_records/{recordId}": {
+      "schema": "FRVIRecord",
+      "description": "Saved FRVI forms"
+    }
+  }
+}
